@@ -21,12 +21,7 @@ jobs:
       - name: 安装依赖
         run: npm install -g javascript-obfuscator
 
-      - name: 检查备份文件是否存在
-        run: |
-          if [ ! -f _worker.js.backup ]; then
-            echo "备份文件 _worker.js.backup 不存在，正在创建..."
-            cp _worker.js _worker.js.backup
-          fi
+    
 
       - name: 混淆代码
         run: |
