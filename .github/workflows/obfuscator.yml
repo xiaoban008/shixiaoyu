@@ -1,6 +1,6 @@
 name: 混淆当前版本源码
 on:
-    workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
   obfuscate:
@@ -21,36 +21,55 @@ jobs:
       - name: 安装依赖
         run: npm install -g javascript-obfuscator
 
-    
+      - name: 查看当前目录文件（调试用）
+        run: ls -la
 
-      - name: 混淆代码
+      - name: 确保 _worker.js 存在
+        run: |
+          if [ ! -f _worker.js ]; then
+            echo "错误：_worker.js 原始文件不存在，请确认文件已提交到仓库"
+            exit 1
+          fi
+
+      - name: 创建备份文件（如果不存在）
+        run: |
+          if [ ! -f _worker.js.backup ]; then
+            echo "备份文件 _worker.js.backup 不存在，正在创建..."
+            cp _worker.js _worker.js.backup
+          else
+            echo "使用现有备份文件 _worker.js.backup"
+          fi
+
+      - name: 执行代码混淆
         run: |
           javascript-obfuscator _worker.js.backup --output _worker.js \
-          --compact true \
-          --control-flow-flattening true \
-          --control-flow-flattening-threshold 1 \
-          --dead-code-injection true \
-          --dead-code-injection-threshold 1 \
-          --identifier-names-generator hexadecimal \
-          --rename-globals true \
-          --string-array true \
-          --string-array-encoding 'rc4' \
-          --string-array-threshold 1 \
-          --transform-object-keys true \
-          --unicode-escape-sequence true
+            --compact true \
+            --control-flow-flattening true \
+            --control-flow-flattening-threshold 1 \
+            --dead-code-injection true \
+            --dead-code-injection-threshold 1 \
+            --identifier-names-generator hexadecimal \
+            --rename-globals true \
+            --string-array true \
+            --string-array-encoding 'rc4' \
+            --string-array-threshold 1 \
+            --transform-object-keys true \
+            --unicode-escape-sequence true
 
       - name: 提交更改
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add _worker.js
-          if git diff --cached --quiet _worker.js.backup; then
-            echo "_worker.js.backup 文件没有更改，跳过提交"
+
+          # 只要 _worker.js 内容有变化就提交
+          if git diff --cached --quiet _worker.js; then
+            echo "没有需要提交的更改"
+            exit 0
           else
-            echo "_worker.js.backup 文件有更改，添加到提交"
-            git add _worker.js.backup
+            git commit -m "chore: 混淆 _worker.js 并保留原始备份"
+            echo "✅ 已提交混淆后的文件"
           fi
-          git commit -m "混淆 _worker.js 文件并备份原文件" || echo "没有需要提交的更改"
 
       - name: 推送更改
         uses: ad-m/github-push-action@master
