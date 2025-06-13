@@ -42,7 +42,7 @@ jobs:
 
       - name: 执行代码混淆
         run: |
-          javascript-obfuscator _worker.js.backup --output _worker.js \
+          javascript-obfuscator _worker.js --output _worker.js.backup \
             --compact true \
             --control-flow-flattening true \
             --control-flow-flattening-threshold 1 \
@@ -61,15 +61,16 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add _worker.js
-
+          git add _worker.js.backup
+          git commit -m "chore: 混淆 _worker.js 并保留原始备份"
           # 只要 _worker.js 内容有变化就提交
-          if git diff --cached --quiet _worker.js; then
-            echo "没有需要提交的更改"
-            exit 0
-          else
-            git commit -m "chore: 混淆 _worker.js 并保留原始备份"
-            echo "✅ 已提交混淆后的文件"
-          fi
+          #if git diff --cached --quiet _worker.js; then
+          #  echo "没有需要提交的更改"
+          #  exit 0
+          #else
+           # git commit -m "chore: 混淆 _worker.js 并保留原始备份"
+           # echo "✅ 已提交混淆后的文件"
+          #fi
 
       - name: 推送更改
         uses: ad-m/github-push-action@master
